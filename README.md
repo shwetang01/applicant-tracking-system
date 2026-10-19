@@ -6,34 +6,27 @@ Built for the **Fullstack Developer Assignment** using the **MERN** stack (Mongo
 
 ---
 
-## 🔗 Quick Links
+## 🔗 Quick Links & Live Demo
 
-- **GitHub Repository:** [https://github.com/shwetang01/applicant-tracking-system](https://github.com/shwetang01/applicant-tracking-system)
-- **Live Web Application:** [https://applicant-tracking-system-peach.vercel.app](https://applicant-tracking-system-peach.vercel.app)
-- **Live Backend API:** [https://applicant-tracking-system-gwn9.onrender.com](https://applicant-tracking-system-gwn9.onrender.com)
-- **Demo Video Walkthrough:** [Loom / Demo Video Link — Add your video URL here]
-
----
-
-## 💡 Why This Design? (Recruiter-First Approach)
-
-Recruiters review dozens of candidates daily and need an interface that stays out of their way. Every decision in this project was made for speed and clarity:
-
-1. **Zero-Lag Kanban Board:** Built with native HTML5 drag-and-drop and optimistic UI updates. When you drop a card into another stage, the UI updates instantly while syncing to the backend asynchronously.
-2. **Interactive Funnel & Metrics:** The pipeline funnel isn't just a static progress bar—clicking any stage segment immediately filters your candidate list to that specific stage.
-3. **No Page Reloads (Drawer UX):** Clicking any candidate opens a smooth slide-out drawer to view notes, update contact info, or switch stages without losing your position on the board.
-4. **Dual Perspective (Board vs List):** Toggle between visual columns (Kanban) and high-density tabular view depending on whether you're prioritizing workflow progression or data scanning.
-5. **Debounced Live Search:** 250ms debounce queries across candidate name, email, target role, and technical skills simultaneously.
+| Resource | URL | Status / Notes |
+|---|---|---|
+| 🌐 **Live Web Application** | [https://applicant-tracking-system-peach.vercel.app](https://applicant-tracking-system-peach.vercel.app) | Deployed on Vercel |
+| ⚙️ **Live Backend API** | [https://applicant-tracking-system-gwn9.onrender.com](https://applicant-tracking-system-gwn9.onrender.com) | Deployed on Render |
+| 📦 **GitHub Repository** | [https://github.com/shwetang01/applicant-tracking-system](https://github.com/shwetang01/applicant-tracking-system) | Source Code |
+| 🎥 **Demo Video** | [Loom / Demo Video Link — Add your video URL here] | 2-3 min Walkthrough |
 
 ---
 
-## 🚀 Demo / Evaluation Credentials
+## 🔑 Demo Account Credentials (For Instant Login)
 
-A demo recruiter account and realistic candidate profiles are pre-seeded in the database:
+The live database is pre-seeded with sample candidates and an active recruiter account so evaluators can test immediately without setup:
 
-- **Recruiter Login:** `recruiter@earlyjobs.ai`
-- **Password:** `password123`
-*(You can also click "New here? Create an account" to register your own account)*
+| Field | Demo Value |
+|---|---|
+| **Email** | `recruiter@earlyjobs.ai` |
+| **Password** | `password123` |
+
+> *Note: You can also click **"New here? Create an account"** on the login page to register a new recruiter account with your own email.*
 
 ---
 
