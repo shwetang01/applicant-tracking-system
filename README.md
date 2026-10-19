@@ -9,9 +9,9 @@ Built for the **Fullstack Developer Assignment** using the **MERN** stack (Mongo
 ## 🔗 Quick Links
 
 - **GitHub Repository:** [https://github.com/shwetang01/applicant-tracking-system](https://github.com/shwetang01/applicant-tracking-system)
+- **Live Web Application:** [https://applicant-tracking-system-peach.vercel.app](https://applicant-tracking-system-peach.vercel.app)
 - **Live Backend API:** [https://applicant-tracking-system-gwn9.onrender.com](https://applicant-tracking-system-gwn9.onrender.com)
-- **Live Web Application:** [Deploying to Vercel...]
-- **Demo Video Walkthrough:** [Loom / Demo Video Link — Add URL here]
+- **Demo Video Walkthrough:** [Loom / Demo Video Link — Add your video URL here]
 
 ---
 
