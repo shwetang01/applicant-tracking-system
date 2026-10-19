@@ -2,6 +2,10 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+
+const SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
 
 export const STAGES = ["Sourced", "Shortlisted", "Screening", "Interview", "Offer", "Joined", "Rejected"];
 
@@ -33,7 +37,64 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+const esc = (s) => s.replace(/[.*+?^$${}()|[\]\\]/g, "\\$&");
+const wrap = (fn) => (req, res) => fn(req, res).catch((e) =>
+  res.status(e.code === 11000 ? 409 : e.name === "ValidationError" || e.name === "CastError" ? 400 : 500)
+    .json({ error: e.code === 11000 ? "Email already exists" : e.message }));
+const pick = ({ name, email, phone, position, skills, notes, stage }) =>
+  ({ name, email, phone, position, skills, notes, stage });
+const toSkills = (b) => (typeof b.skills === "string" ? { ...b, skills: b.skills.split(",").map((s) => s.trim()).filter(Boolean) } : b);
+
+const sign = (u) => ({ token: jwt.sign({ id: u._id }, SECRET, { expiresIn: "7d" }), email: u.email });
+
+app.post("/api/auth/register", wrap(async (req, res) => {
+  const { email, password } = req.body;
+  if (!password || password.length < 6) return res.status(400).json({ error: "Password must be 6+ characters" });
+  res.status(201).json(sign(await User.create({ email, password: await bcrypt.hash(password, 10) })));
+}));
+
+app.post("/api/auth/login", wrap(async (req, res) => {
+  const u = await User.findOne({ email: String(req.body.email || "").toLowerCase() });
+  if (!u || !(await bcrypt.compare(String(req.body.password || ""), u.password)))
+    return res.status(401).json({ error: "Invalid email or password" });
+  res.json(sign(u));
+}));
+
+const auth = (req, res, next) => {
+  try {
+    jwt.verify((req.headers.authorization || "").replace("Bearer ", ""), SECRET);
+    next();
+  } catch {
+    res.status(401).json({ error: "Unauthorized" });
+  }
+};
+app.use(["/api/candidates"], auth);
+
+app.get("/api/candidates", wrap(async (req, res) => {
+  const { q, stage } = req.query;
+  const f = {};
+  if (STAGES.includes(stage)) f.stage = stage;
+  if (q) {
+    const r = new RegExp(esc(String(q)), "i");
+    f.$or = [{ name: r }, { email: r }, { position: r }, { skills: r }];
+  }
+  res.json(await Candidate.find(f).sort({ createdAt: -1 }));
+}));
+
+app.post("/api/candidates", wrap(async (req, res) =>
+  res.status(201).json(await Candidate.create(pick(toSkills(req.body))))));
+
+app.put("/api/candidates/:id", wrap(async (req, res) => {
+  const c = await Candidate.findByIdAndUpdate(req.params.id, pick(toSkills(req.body)), { new: true, runValidators: true, omitUndefined: true });
+  c ? res.json(c) : res.status(404).json({ error: "Not found" });
+}));
+
+app.delete("/api/candidates/:id", wrap(async (req, res) => {
+  const c = await Candidate.findByIdAndDelete(req.params.id);
+  c ? res.status(204).end() : res.status(404).json({ error: "Not found" });
+}));
+
+app.get("/api/health", (_q, r) => r.json({ ok: true }));
 
 await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ats");
 app.listen(process.env.PORT || 5000, () => console.log("API up"));
