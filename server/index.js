@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-const SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
+const SECRET = process.env.JWT_SECRET || "dev-secret-change-me"; // ponytail: set JWT_SECRET in prod
 
 export const STAGES = ["Sourced", "Shortlisted", "Screening", "Interview", "Offer", "Joined", "Rejected"];
 
@@ -25,19 +25,11 @@ const Candidate = mongoose.model(
   )
 );
 
-const User = mongoose.model(
-  "User",
-  new mongoose.Schema({
-    email: { type: String, required: true, trim: true, lowercase: true, unique: true },
-    password: { type: String, required: true },
-  })
-);
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const esc = (s) => s.replace(/[.*+?^$${}()|[\]\\]/g, "\\$&");
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const wrap = (fn) => (req, res) => fn(req, res).catch((e) =>
   res.status(e.code === 11000 ? 409 : e.name === "ValidationError" || e.name === "CastError" ? 400 : 500)
     .json({ error: e.code === 11000 ? "Email already exists" : e.message }));
@@ -45,6 +37,13 @@ const pick = ({ name, email, phone, position, skills, notes, stage }) =>
   ({ name, email, phone, position, skills, notes, stage });
 const toSkills = (b) => (typeof b.skills === "string" ? { ...b, skills: b.skills.split(",").map((s) => s.trim()).filter(Boolean) } : b);
 
+const User = mongoose.model(
+  "User",
+  new mongoose.Schema({
+    email: { type: String, required: true, trim: true, lowercase: true, unique: true },
+    password: { type: String, required: true },
+  })
+);
 const sign = (u) => ({ token: jwt.sign({ id: u._id }, SECRET, { expiresIn: "7d" }), email: u.email });
 
 app.post("/api/auth/register", wrap(async (req, res) => {
@@ -68,7 +67,7 @@ const auth = (req, res, next) => {
     res.status(401).json({ error: "Unauthorized" });
   }
 };
-app.use(["/api/candidates"], auth);
+app.use(["/api/candidates", "/api/stats"], auth);
 
 app.get("/api/candidates", wrap(async (req, res) => {
   const { q, stage } = req.query;
@@ -92,6 +91,19 @@ app.put("/api/candidates/:id", wrap(async (req, res) => {
 app.delete("/api/candidates/:id", wrap(async (req, res) => {
   const c = await Candidate.findByIdAndDelete(req.params.id);
   c ? res.status(204).end() : res.status(404).json({ error: "Not found" });
+}));
+
+app.get("/api/stats", wrap(async (_req, res) => {
+  const [byStage, byPosition, recent] = await Promise.all([
+    Candidate.aggregate([{ $group: { _id: "$stage", n: { $sum: 1 } } }]),
+    Candidate.aggregate([{ $group: { _id: "$position", n: { $sum: 1 } } }, { $sort: { n: -1 } }, { $limit: 5 }]),
+    Candidate.countDocuments({ createdAt: { $gte: new Date(Date.now() - 7 * 864e5) } }),
+  ]);
+  const stages = Object.fromEntries(STAGES.map((s) => [s, 0]));
+  byStage.forEach((x) => (stages[x._id] = x.n));
+  const total = Object.values(stages).reduce((a, b) => a + b, 0);
+  res.json({ total, stages, topPositions: byPosition.map((x) => ({ position: x._id, n: x.n })), last7Days: recent,
+    joinRate: total ? Math.round((stages.Joined / total) * 100) : 0 });
 }));
 
 app.get("/api/health", (_q, r) => r.json({ ok: true }));
